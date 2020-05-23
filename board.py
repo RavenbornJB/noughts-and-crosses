@@ -16,7 +16,7 @@ class Board:
         """
         Creates a 3x3 board.
         """
-        self._board = [
+        self.board = [
                        [" ", " ", " "],
                        [" ", " ", " "],
                        [" ", " ", " "]
@@ -27,10 +27,15 @@ class Board:
         self.PLAYER_2_SYMBOL = p2s
 
     def __setitem__(self, coords, value):
-        self._board[coords[0]][coords[1]] = value
+        self.board[coords[0]][coords[1]] = value
 
     def __getitem__(self, coords):
-        return self._board[coords[0]][coords[1]]
+        return self.board[coords[0]][coords[1]]
+
+    def __eq__(self, other):
+        return (isinstance(other, Board)
+                and self.board == other.board
+                and self._current_turn == other._current_turn)
 
     def get_turn(self):
         """
@@ -56,6 +61,16 @@ class Board:
 
         self[coords] = symbol
         self._current_turn += 1
+        return self
+
+    def undo(self, coords):
+        """
+        Deletes a move.
+        :param coords: tuple(int, int)
+        :return: None
+        """
+        self[coords] = " "
+        self._current_turn -= 1
 
     def game_over(self, player=1):
         """
