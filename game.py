@@ -85,7 +85,6 @@ class Game:
             while not st.isEmpty():
                 curr = st.pop()
                 curr_board = curr.data[0]
-                print(curr_board)
                 p1w = curr_board.game_over(player=1)
                 p2w = curr_board.game_over(player=2)
     
@@ -100,7 +99,6 @@ class Game:
                 if not cells:
                     # No one won and no cells left - it's a tie.
                     curr.data[1] = 0
-                    print("tie")
                     continue
     
                 available = random.sample(cells, k=min(len(cells), 2))
@@ -149,23 +147,55 @@ class Game:
         if rt.right is not None:
             scores.append((rt.right.data[2], score(rt.right, player=1)))
 
-        print(scores)
         return min(scores, key=lambda x: x[1])[0]
 
     def minimax2(self):
+        """
+        Second implementation of the minimax algorithm.
+        THE CORRECT ONE.
+        :return: tuple(int, int)
+        """
 
         def score(state, player=1):
-            p1w = state.game_over(player=1)
-            p2w = state.game_over(player=2)
+            """
+            Scores a game state recursively using minimax.
+
+            Player 1 is maximizing, player 2 is minimizing.
+            :param state: Board
+            :param player: Any[1, 2]
+            :return:
+            """
             cells = state.free_cells()
 
-            if True:
-                pass
+            if state.game_over(player=1):
+                return 1
+            elif state.game_over(player=2):
+                return -1
+            elif not cells:
+                return 0
 
-            return 1
+            algo_func = max if player == 1 else min
 
-        scores = score(self.board)
-        return 1, 1
+            topScore = -1000 if player == 1 else 1000
+            for cell in cells:
+                state.move(cell, player=player)
+                topScore = algo_func(score(state, player=player % 2 + 1), topScore)
+                state.undo(cell)
+
+            return topScore
+
+        s = score(deepcopy(self.board))
+        bestMove = None
+        bestScore = 1000
+        for move in self.board.free_cells():
+            self.board.move(move, player=2)
+            newScore = score(self.board, player=1)
+            self.board.undo(move)
+            if newScore < bestScore:
+                bestScore = newScore
+                bestMove = move
+
+        return bestMove
 
     def play(self, algorithm=1):
         """
@@ -184,6 +214,7 @@ class Game:
         current_player = self.get_turn()
         while not (self.board.game_over(player=current_player % 2 + 1) or self.board.free_cells() == []):
             if current_player == 1:
+                print("Your turn!")
                 self.player_move()
             else:
                 time.sleep(0.2)
@@ -206,7 +237,7 @@ class Game:
         else:
             raise RuntimeError("The game ended in an unexpected way.")
 
-        print(f"\nEnd board state:\n{self}\n")
+        print(f"\nEnd board state:\n\n{self}")
 
     def __str__(self):
         """
@@ -218,4 +249,13 @@ class Game:
 
 if __name__ == '__main__':
     game = Game()
-    game.play()
+
+    q = "\nWhich algorithm do you want to use?\n1 - two random moves from Task 3\n2 - full minimax from Task 4\n"
+    while True:
+        algo = input(q)
+        if algo == "1" or algo == "2":
+            print("\nLet's play!\n")
+            game.play(algorithm=int(algo))
+            break
+        else:
+            print("Enter '1' or '2' to proceed.")
